@@ -13,7 +13,7 @@ class Metricas:
   def utilizacaoPontesDesembarque(self, numeroDePontes, tempoTotalSimulacao):
     for i in range(numeroDePontes):
       tempoUtilizacaoPonteDesembarque = self.__somatorioDeTempoDeUsoPorRecurso(
-          'ponte de desembarque(finger)', 'pouso', i)
+          'ponte de desembarque(finger)', 'desembarque', i)
 
       print('Utilização das pontes de desembarque(finger) %d = ' % i, tempoUtilizacaoPonteDesembarque/tempoTotalSimulacao)
 
