@@ -9,9 +9,9 @@ class Aeroporto:
     self.env = env
 
     # Variáveis de recursos
-    self.pistas = simpy.Store(env, 1)
+    self.pistas = simpy.Store(env, 2)
     self.pontesDeDesembarque = simpy.Store(env, 2)
-    self.bombasDeCombustivel = simpy.Store(env, 3)
+    self.bombasDeCombustivel = simpy.Store(env, 2)
     
     # Variáveis de tempo
     self.tempoDePouso = 15
@@ -19,12 +19,15 @@ class Aeroporto:
     self.tempoDeAbastecimento = 15
     self.tempoDeDecolagem = 15
 
-    self.filas = {
-      'fila de pouso': [],  
-      'fila de desembarque': [],  
-      'fila de abastecimento': [],  
-      'fila de decolagem': [],  
-    }
+    # Métricas
+    self.registrosDeMetrica = []
+
+    # self.filas = {
+    #   'fila de pouso': [],  
+    #   'fila de desembarque': [],  
+    #   'fila de abastecimento': [],  
+    #   'fila de decolagem': [],  
+    # }
 
     self.preencherRecursos()
 
@@ -44,11 +47,6 @@ class Aeroporto:
     pass
 
   def processoGeralAeroporto(self, env):
-    
-    global tempoDePouso
-    global tempoDeEmbarque
-    global tempoDeAbastecimento
-    global tempoDeDecolagem
 
     i = 0
 

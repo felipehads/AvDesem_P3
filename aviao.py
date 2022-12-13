@@ -8,20 +8,26 @@ def processoAviao(env, nomeAviao, aeroporto):
         'nome do avião': nomeAviao,
         'pista de pouso': None,
         'bomba de combustivel': None,
-        'pista de desembarque(finger)': None,
+        'ponte de desembarque(finger)': None,
         'pista de decolagem': None,
+        'tempos': {
+            'pouso': [],
+            'abastecimento': [],
+            'desembarque': [],
+            'decolagem': []
+        }
     }
 
     # FILA DE POUSO
-    aeroporto.filas['fila de pouso'].append(
-        nomeAviao + '- Chegada - ' + str(env.now))
+    dadosAviao['tempos']['pouso'].append(env.now)
     # Espera uma pista de pouso estar disponível
     pistaUtilizada = yield aeroporto.pistas.get()
-    aeroporto.filas['fila de pouso'].append(
-        nomeAviao + '- Pouso - ' + str(env.now))
+    dadosAviao['tempos']['pouso'].append(env.now)
+    
 
     # PROCESSO DE POUSO - TEMPO
     yield env.process(lidarComTiposDeProcedimento(env, 'pousar', aeroporto))
+    dadosAviao['tempos']['pouso'].append(env.now)
 
     dadosAviao['pista de pouso'] = pistaUtilizada['id']
     # LIBERA A PISTA DE POUSO
@@ -35,13 +41,14 @@ def processoAviao(env, nomeAviao, aeroporto):
     if porcentagemDeGasolinaAtual <= 70:
 
       # FILA DE ABASTECIMENTO
-      aeroporto.filas['fila de abastecimento'].append(nomeAviao + '- Chegada - ' + str(env.now))
+      dadosAviao['tempos']['abastecimento'].append(env.now)
       # Espera uma bomba de combustível estar disponível
       bombaUtilizada = yield aeroporto.bombasDeCombustivel.get()
-      aeroporto.filas['fila de abastecimento'].append(nomeAviao + '- Abastecido - ' + str(env.now))
+      dadosAviao['tempos']['abastecimento'].append(env.now)
 
       # PROCESSO DE ABASTECER - TEMPO
       yield env.process(lidarComTiposDeProcedimento(env, 'abastecer', aeroporto))
+      dadosAviao['tempos']['abastecimento'].append(env.now)
 
       dadosAviao['bomba de combustivel'] = bombaUtilizada['id']
       # LIBERA A BOMBA DE COMBUSTÍVEL
@@ -49,34 +56,36 @@ def processoAviao(env, nomeAviao, aeroporto):
       
 
     # FILA DE EMBARQUE/DESEMBARQUE
-    aeroporto.filas['fila de desembarque'].append( nomeAviao + '- Chegada - ' + str(env.now))
+    dadosAviao['tempos']['desembarque'].append(env.now)
     # Espera uma ponte de embarque/desembarque estar disponível
     pistaDeDesembarqueUtilizada = yield aeroporto.pontesDeDesembarque.get()
-    aeroporto.filas['fila de desembarque'].append(nomeAviao + '- Desembarque finalizado - ' + str(env.now))
+    dadosAviao['tempos']['desembarque'].append(env.now)
 
     # PROCESSO DE EMBARQUE/DESEMBARQUE - TEMPO
     yield env.process(lidarComTiposDeProcedimento(env, 'embarque', aeroporto))
+    dadosAviao['tempos']['desembarque'].append(env.now)
 
-    dadosAviao['pista de desembarque(finger)'] = pistaDeDesembarqueUtilizada['id']
+    dadosAviao['ponte de desembarque(finger)'] = pistaDeDesembarqueUtilizada['id']
     # LIBERA A PISTA DE EMBARQUE/DESEMBARQUE
     yield aeroporto.pontesDeDesembarque.put(pistaDeDesembarqueUtilizada)
 
     
-
     # FILA DE DECOLAGEM
-    aeroporto.filas['fila de decolagem'].append(nomeAviao + '- Chegada - ' + str(env.now))
+    dadosAviao['tempos']['decolagem'].append(env.now)
     # Espera uma pista estar disponível
     pistaDeDecolagemUtilizada = yield aeroporto.pistas.get()
-    aeroporto.filas['fila de decolagem'].append(nomeAviao + '- Decolagem realizada - ' + str(env.now))
+    dadosAviao['tempos']['decolagem'].append(env.now)
 
     # PROCESSO DE DECOLAGEM - TEMPO
     yield env.process(lidarComTiposDeProcedimento(env, 'decolar', aeroporto))
+    dadosAviao['tempos']['decolagem'].append(env.now)
 
     dadosAviao['pista de decolagem'] = pistaDeDecolagemUtilizada['id']
     # LIBERA A PISTA DE DECOLAGEM
     yield aeroporto.pistas.put(pistaDeDecolagemUtilizada)
 
-    
+    aeroporto.registrosDeMetrica.append(dadosAviao)
+
 
 def lidarComTiposDeProcedimento(env, procedimento, aeroporto):
     match procedimento:
