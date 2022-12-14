@@ -9,6 +9,7 @@ class Metricas:
       'tempo de decolagem': aeroporto.tempoDeDecolagem
     }
 
+  # 
   def __separarAvioesPorIdDoRecurso(self, nomeDoRecurso, quantidade):
     quantidadeDeAvioesPorPista = [0] * quantidade
     for registro in self.registrosDeMetrica:
@@ -16,7 +17,6 @@ class Metricas:
         quantidadeDeAvioesPorPista[registro[nomeDoRecurso]] += 1
     return quantidadeDeAvioesPorPista
   
-
   def utilizacaoPistas(self, numeroDePistas, tempoTotalSimulacao):
     # [0] - Quantidade de aviões na pista 0 | [1] - Quantidade de aviões na pista 1 | [2] - Quantidade de aviões na pista 2 ...
     quantidadeDeAvioesPorPistaDePouso = self.__separarAvioesPorIdDoRecurso('pista de pouso', numeroDePistas)
@@ -31,7 +31,6 @@ class Metricas:
       print('Utilização da pista %d: %.2f' %
             (i, utilizacaoPista))
       
- 
   def utilizacaoPontesDesembarque(self, numeroDePontes, tempoTotalSimulacao):
     quantidadeDeAvioesPorPonteDeDesembarque = self.__separarAvioesPorIdDoRecurso('ponte de desembarque(finger)', numeroDePontes)
 
@@ -57,25 +56,36 @@ class Metricas:
       print('Utilização da bomba de combustível %d: %.2f' %
             (i, utilizacaoBombas))
 
-
   def avioesAtendidosPorHora(self, tempoTotalSimulacao):
-    throughput = len(self.registrosDeMetrica) / (tempoTotalSimulacao/(60 * 60))
+    totalDeAvioesConcluidos = 0
+    for registro in self.registrosDeMetrica:
+      aviaoConcluido = True
+      teste = 0
+
+      for idx, tempo in enumerate(registro['tempos']):
+        if(len(registro['tempos'][tempo]) < 3):
+          aviaoConcluido = False
+      
+      if(aviaoConcluido == True):
+        totalDeAvioesConcluidos += 1
+      
+    throughput = totalDeAvioesConcluidos / (tempoTotalSimulacao/(60 * 60))
     print('Aviões atendidos por horas (throughput): %.2f' % throughput)
 
   def tempoMedioPorAviaoEmFila(self):
     tempoTotalEmFila = 0
     for registro in self.registrosDeMetrica:
-      tempoTotalEmFila+= self.__tempoDecorridoEntreProcessos(registro['tempos']['pouso'], 1, 0)
+      if(len(registro['tempos']['pouso']) > 1):
+        tempoTotalEmFila+= self.__tempoDecorridoEntreProcessos(registro['tempos']['pouso'], 1, 0)
       
-      if(len(registro['tempos']['abastecimento']) > 0):
-        tempoTotalEmFila += self.__tempoDecorridoEntreProcessos(
-            registro['tempos']['abastecimento'], 1, 0)
+      if(len(registro['tempos']['abastecimento']) > 1):
+        tempoTotalEmFila += self.__tempoDecorridoEntreProcessos(registro['tempos']['abastecimento'], 1, 0)
 
-      tempoTotalEmFila += self.__tempoDecorridoEntreProcessos(
-          registro['tempos']['desembarque'], 1, 0)
+      if(len(registro['tempos']['desembarque']) > 1):
+        tempoTotalEmFila += self.__tempoDecorridoEntreProcessos(registro['tempos']['desembarque'], 1, 0)
 
-      tempoTotalEmFila += self.__tempoDecorridoEntreProcessos(
-          registro['tempos']['decolagem'], 1, 0)
+      if(len(registro['tempos']['decolagem']) > 1):
+        tempoTotalEmFila += self.__tempoDecorridoEntreProcessos(registro['tempos']['decolagem'], 1, 0)
 
     tempoMedio = (tempoTotalEmFila/len(self.registrosDeMetrica))
     print('Tempo médio em fila: %.2f segundos' %tempoMedio)
@@ -84,15 +94,14 @@ class Metricas:
   def tempoMedioPorAviaoEmSolo(self):
     tempoTotalEmSolo = 0
     for registro in self.registrosDeMetrica:
-      if(len(registro['tempos']['abastecimento']) > 0):
-        tempoTotalEmSolo += self.__tempoDecorridoEntreProcessos(
-            registro['tempos']['abastecimento'], 2, 0)
+      if(len(registro['tempos']['abastecimento']) > 2):
+        tempoTotalEmSolo += self.__tempoDecorridoEntreProcessos(registro['tempos']['abastecimento'], 2, 0)
 
-      tempoTotalEmSolo += self.__tempoDecorridoEntreProcessos(
-          registro['tempos']['desembarque'], 2, 0)
+      if(len(registro['tempos']['desembarque']) > 2):
+        tempoTotalEmSolo += self.__tempoDecorridoEntreProcessos(registro['tempos']['desembarque'], 2, 0)
 
-      tempoTotalEmSolo += self.__tempoDecorridoEntreProcessos(
-          registro['tempos']['decolagem'], 2, 0)
+      if(len(registro['tempos']['decolagem']) > 2):
+        tempoTotalEmSolo += self.__tempoDecorridoEntreProcessos(registro['tempos']['decolagem'], 2, 0)
 
     tempoMedio = (tempoTotalEmSolo/len(self.registrosDeMetrica))
     print('Tempo médio em solo: %.2f segundos' % tempoMedio)
@@ -101,11 +110,3 @@ class Metricas:
   def __tempoDecorridoEntreProcessos(self, registro, final, começo):
     return registro[final] - registro[começo]
     
-  # def __somatorioDeTempoDeUsoPorRecurso(self, nomeDoRecurso, tempoDoProcesso, numeroDoRecurso):
-  #   somatorioDeTempo = 0
-
-  #   for registro in self.registrosDeMetrica:
-  #     if registro[nomeDoRecurso] == numeroDoRecurso:
-  #       somatorioDeTempo += self.tempos[tempoDoProcesso]
-
-  #   return somatorioDeTempo
