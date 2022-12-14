@@ -10,8 +10,8 @@ def processoAviao(env, nomeAviao, aeroporto):
         'bomba de combustivel': None,
         'ponte de desembarque(finger)': None,
         'pista de decolagem': None,
-        'tempos': {
-            'pouso': [],
+        'tempos': {  # [0] - ENTRA NA FILA | [1] - SAI DA FILA/INICIA O PROCESSO | [2] - FINALIZA O PROCESSO
+            'pouso': [], 
             'abastecimento': [],
             'desembarque': [],
             'decolagem': []
@@ -58,16 +58,16 @@ def processoAviao(env, nomeAviao, aeroporto):
     # FILA DE EMBARQUE/DESEMBARQUE
     dadosAviao['tempos']['desembarque'].append(env.now)
     # Espera uma ponte de embarque/desembarque estar disponível
-    pistaDeDesembarqueUtilizada = yield aeroporto.pontesDeDesembarque.get()
+    ponteDeDesembarqueUtilizada = yield aeroporto.pontesDeDesembarque.get()
     dadosAviao['tempos']['desembarque'].append(env.now)
 
     # PROCESSO DE EMBARQUE/DESEMBARQUE - TEMPO
     yield env.process(lidarComTiposDeProcedimento(env, 'embarque', aeroporto))
     dadosAviao['tempos']['desembarque'].append(env.now)
 
-    dadosAviao['ponte de desembarque(finger)'] = pistaDeDesembarqueUtilizada['id']
+    dadosAviao['ponte de desembarque(finger)'] = ponteDeDesembarqueUtilizada['id']
     # LIBERA A PISTA DE EMBARQUE/DESEMBARQUE
-    yield aeroporto.pontesDeDesembarque.put(pistaDeDesembarqueUtilizada)
+    yield aeroporto.pontesDeDesembarque.put(ponteDeDesembarqueUtilizada)
 
     
     # FILA DE DECOLAGEM
@@ -84,7 +84,10 @@ def processoAviao(env, nomeAviao, aeroporto):
     # LIBERA A PISTA DE DECOLAGEM
     yield aeroporto.pistas.put(pistaDeDecolagemUtilizada)
 
-    aeroporto.registrosDeMetrica.append(dadosAviao)
+    aeroporto.registrarMetrica(dadosAviao)
+
+    # print(dadosAviao)
+    pass
 
 
 def lidarComTiposDeProcedimento(env, procedimento, aeroporto):

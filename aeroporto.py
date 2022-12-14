@@ -9,9 +9,9 @@ class Aeroporto:
     self.env = env
 
     # Variáveis de recursos
-    self.pistas = simpy.Store(env, 2)
-    self.pontesDeDesembarque = simpy.Store(env, 2)
-    self.bombasDeCombustivel = simpy.Store(env, 2)
+    self.pistas = simpy.Store(env, 1)
+    self.pontesDeDesembarque = simpy.Store(env, 1)
+    self.bombasDeCombustivel = simpy.Store(env, 1)
     
     # Variáveis de tempo
     self.tempoDePouso = 15
@@ -22,16 +22,12 @@ class Aeroporto:
     # Métricas
     self.registrosDeMetrica = []
 
-    # self.filas = {
-    #   'fila de pouso': [],  
-    #   'fila de desembarque': [],  
-    #   'fila de abastecimento': [],  
-    #   'fila de decolagem': [],  
-    # }
-
     self.preencherRecursos()
 
     pass
+
+  def registrarMetrica(self, metrica):
+    self.registrosDeMetrica.append(metrica)
 
   def preencherRecursos(self):
 
@@ -52,10 +48,12 @@ class Aeroporto:
 
     env.process(processoAviao(env, 'Avião %d' %i, self))
 
+
     while True:
-      yield env.timeout(10)
+      yield env.timeout(15)
       i += 1
       env.process(processoAviao(env, 'Avião %d' %i, self))
       
+
 
   

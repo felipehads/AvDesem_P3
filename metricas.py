@@ -2,20 +2,61 @@ class Metricas:
 
   def __init__(self, aeroporto):
     self.registrosDeMetrica = aeroporto.registrosDeMetrica 
+    self.tempos = {
+      'tempo de pouso': aeroporto.tempoDePouso,
+      'tempo de desembarque': aeroporto.tempoDeEmbarque,
+      'tempo de abastecimento': aeroporto.tempoDeAbastecimento,
+      'tempo de decolagem': aeroporto.tempoDeDecolagem
+    }
+
+  def __separarAvioesPorIdDoRecurso(self, nomeDoRecurso, quantidade):
+    quantidadeDeAvioesPorPista = [0] * quantidade
+    for registro in self.registrosDeMetrica:
+      if(registro[nomeDoRecurso] is not None):
+        quantidadeDeAvioesPorPista[registro[nomeDoRecurso]] += 1
+    return quantidadeDeAvioesPorPista
+  
 
   def utilizacaoPistas(self, numeroDePistas, tempoTotalSimulacao):
+    # [0] - Quantidade de aviões na pista 0 | [1] - Quantidade de aviões na pista 1 | [2] - Quantidade de aviões na pista 2 ...
+    quantidadeDeAvioesPorPistaDePouso = self.__separarAvioesPorIdDoRecurso('pista de pouso', numeroDePistas)
+    quantidadeDeAvioesPorPistaDeDecolagem = self.__separarAvioesPorIdDoRecurso('pista de decolagem', numeroDePistas)
+  
     for i in range(numeroDePistas):
-      tempoUtilizacaoPouso = self.__somatorioDeTempoDeUsoPorRecurso('pista de pouso', 'pouso', i)
-      tempoUtilizacaoDecolagem = self.__somatorioDeTempoDeUsoPorRecurso('pista de decolagem', 'decolagem', i)
+      tempoTotalPouso = (quantidadeDeAvioesPorPistaDePouso[i] * self.tempos['tempo de pouso'])
+      tempoTotalDecolagem = (quantidadeDeAvioesPorPistaDeDecolagem[i] * self.tempos['tempo de decolagem'])
 
-      print('Utilização da pista %d = ' %i ,(tempoUtilizacaoPouso + tempoUtilizacaoDecolagem)/tempoTotalSimulacao)
+      utilizacaoPista = (tempoTotalPouso + tempoTotalDecolagem) / tempoTotalSimulacao
 
+      print('Utilização da pista %d: %.2f' %
+            (i, utilizacaoPista))
+      
+ 
   def utilizacaoPontesDesembarque(self, numeroDePontes, tempoTotalSimulacao):
-    for i in range(numeroDePontes):
-      tempoUtilizacaoPonteDesembarque = self.__somatorioDeTempoDeUsoPorRecurso(
-          'ponte de desembarque(finger)', 'desembarque', i)
+    quantidadeDeAvioesPorPonteDeDesembarque = self.__separarAvioesPorIdDoRecurso('ponte de desembarque(finger)', numeroDePontes)
 
-      print('Utilização das pontes de desembarque(finger) %d = ' % i, tempoUtilizacaoPonteDesembarque/tempoTotalSimulacao)
+    for i in range(numeroDePontes):
+      tempoTotalDesembarque = (
+          quantidadeDeAvioesPorPonteDeDesembarque[i] * self.tempos['tempo de desembarque'])
+      
+      utilizacaoPonte = tempoTotalDesembarque / tempoTotalSimulacao
+
+      print('Utilização da ponte de desembarque %d: %.2f' %
+            (i, utilizacaoPonte))
+
+  def utilizacaoBombasDeCombustivel(self, numeroDeBombas, tempoTotalSimulacao):
+    quantidadeDeAvioesPorBombaDeCombustivel = self.__separarAvioesPorIdDoRecurso(
+        'bomba de combustivel', numeroDeBombas)
+
+    for i in range(numeroDeBombas):
+      tempoTotalAbastecimento = (
+          quantidadeDeAvioesPorBombaDeCombustivel[i] * self.tempos['tempo de abastecimento'])
+
+      utilizacaoBombas = tempoTotalAbastecimento / tempoTotalSimulacao
+
+      print('Utilização da bomba de combustível %d: %.2f' %
+            (i, utilizacaoBombas))
+
 
   def avioesAtendidosPorHora(self, tempoTotalSimulacao):
     throughput = len(self.registrosDeMetrica) / (tempoTotalSimulacao/(60 * 60))
@@ -57,15 +98,14 @@ class Metricas:
     print('Tempo médio em solo: %.2f segundos' % tempoMedio)
     return tempoMedio
 
-  def __tempoDecorridoEntreProcessos(self,registro, final, começo):
+  def __tempoDecorridoEntreProcessos(self, registro, final, começo):
     return registro[final] - registro[começo]
     
-  def __somatorioDeTempoDeUsoPorRecurso(self, nomeDoRecurso, nomeDoProcesso, numeroDoRecurso):
-    somatorioDeTempo = 0
+  # def __somatorioDeTempoDeUsoPorRecurso(self, nomeDoRecurso, tempoDoProcesso, numeroDoRecurso):
+  #   somatorioDeTempo = 0
 
-    for registro in self.registrosDeMetrica:
-      if registro[nomeDoRecurso] == numeroDoRecurso:
-        somatorioDeTempo += self.__tempoDecorridoEntreProcessos(
-            registro['tempos'][nomeDoProcesso], 2, 1)
+  #   for registro in self.registrosDeMetrica:
+  #     if registro[nomeDoRecurso] == numeroDoRecurso:
+  #       somatorioDeTempo += self.tempos[tempoDoProcesso]
 
-    return somatorioDeTempo
+  #   return somatorioDeTempo
